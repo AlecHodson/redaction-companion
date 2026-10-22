@@ -313,22 +313,23 @@ async function msalSignIn(){
     if(!msalInstance) throw new Error('Auth not ready — please wait a moment and try again.');
     const inTeams = isInTeamsFrame() && typeof microsoftTeams !== 'undefined';
     let resp;
-    const accounts = msalInstance.getAllAccounts();
-    if(accounts.length > 0){
-      try { resp = await msalInstance.acquireTokenSilent({ scopes: GRAPH_SCOPES, account: accounts[0] }); }
-      catch(e){ resp = null; }
+    // Silent attempts already ran automatically at page load (autoSignInAttempt).
+    // This button only runs after those failed, so go straight to an interactive
+    // sign-in as the FIRST awaited call — any prior await here breaks the
+    // browser's user-gesture link to this click and makes window.open() return
+    // null (popup_window_error / empty_window_error).
+    if(inTeams){
+      await msalInstance.loginRedirect({ scopes: GRAPH_SCOPES, prompt: 'select_account', redirectUri: MSAL_CONFIG.auth.redirectUri });
+      return; // page will redirect
     }
-    if(!resp){
-      try { resp = await msalInstance.ssoSilent({ scopes: GRAPH_SCOPES }); }
-      catch(e){ resp = null; }
-    }
-    if(!resp){
-      if(inTeams){
-        await msalInstance.loginRedirect({ scopes: GRAPH_SCOPES, prompt: 'select_account', redirectUri: MSAL_CONFIG.auth.redirectUri });
-        return; // page will redirect
-      } else {
-        resp = await msalInstance.loginPopup({ scopes: GRAPH_SCOPES, prompt: 'select_account' });
-      }
+    try {
+      resp = await msalInstance.loginPopup({ scopes: GRAPH_SCOPES, prompt: 'select_account' });
+    } catch(popupErr){
+      console.warn('[MSAL] loginPopup failed, falling back to redirect:', popupErr.message);
+      // Popup blocked/failed (e.g. empty_window_error) — fall back to a full-page redirect,
+      // which works regardless of popup-blocker settings or user-gesture timing.
+      await msalInstance.loginRedirect({ scopes: GRAPH_SCOPES, prompt: 'select_account', redirectUri: MSAL_CONFIG.auth.redirectUri });
+      return; // page will redirect
     }
     onSignedIn(resp.account);
   } catch(e){
@@ -338,6 +339,7 @@ async function msalSignIn(){
     setAuthStatus('');
   }
 }
+
 
 function onSignedIn(account){
   if(!account || !account.username){ setAuthStatus('Sign-in did not return a user — please try again.'); return; }
