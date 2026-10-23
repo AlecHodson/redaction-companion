@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <title>DSAR Redaction Companion — Complete Childcare Group</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -611,8 +614,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* ── REDACT TAB (2-col) ── */
 .redact-layout{display:grid;grid-template-columns:340px 1fr;min-height:calc(100vh - 113px);}
-.sidebar{background:var(--card);border-right:1px solid var(--border);padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;}
-.main-content{padding:24px 28px;overflow-y:auto;}
+.sidebar{background:var(--card);border-right:1px solid var(--border);padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;height:calc(100vh - 113px);position:sticky;top:113px;}
+.main-content{padding:24px 28px;overflow-y:auto;height:calc(100vh - 113px);}
 
 /* Panels */
 .panel{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;}
@@ -917,12 +920,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           </div>
         </div>
 
-        <button class="btn-primary" id="redactBtn" onclick="redactAll()">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="2" fill="#fff" opacity=".2"/><rect x="3" y="5" width="10" height="2.5" rx="1" fill="#fff"/><rect x="3" y="9" width="7" height="2.5" rx="1" fill="#fff"/></svg>
-          Redact All Documents
-        </button>
-        <button class="btn-secondary hidden" id="downloadLogBtn" onclick="downloadLog()">Download Audit Log (CSV)</button>
-        <button class="btn-secondary" onclick="clearSession()">Clear Session</button>
+        <div style="position:sticky;bottom:0;background:var(--card);padding:12px 0 4px;margin-top:auto;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;">
+          <button class="btn-primary" id="redactBtn" onclick="redactAll()">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="2" fill="#fff" opacity=".2"/><rect x="3" y="5" width="10" height="2.5" rx="1" fill="#fff"/><rect x="3" y="9" width="7" height="2.5" rx="1" fill="#fff"/></svg>
+            Redact All Documents
+          </button>
+          <button class="btn-secondary hidden" id="downloadLogBtn" onclick="downloadLog()">Download Audit Log (CSV)</button>
+          <button class="btn-secondary" onclick="clearSession()">Clear Session</button>
+        </div>
       </div>
 
       <!-- MAIN -->
