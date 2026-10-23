@@ -900,6 +900,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
             <label><input type="checkbox" id="optRegex"> Regex</label>
           </div>
           <div class="chips-area" id="chipsArea"><span style="font-size:11px;color:var(--muted);">No terms added.</span></div>
+          <div id="noTermsWarn" style="display:none;background:#fdecea;color:var(--danger);font-size:11px;font-weight:600;padding:6px 8px;border-radius:5px;margin-top:4px;">⚠ Add at least one term before redacting.</div>
           <div style="margin-top:10px;">
             <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">BULK IMPORT (one per line or comma-separated)</div>
             <textarea class="bulk-area" id="bulkInput" placeholder="John Smith&#10;NI: AB123456C&#10;07700 900000"></textarea>
@@ -920,14 +921,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           </div>
         </div>
 
-        <div style="position:sticky;bottom:0;background:var(--card);padding:12px 0 4px;margin-top:auto;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;">
-          <button class="btn-primary" id="redactBtn" onclick="redactAll()">
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="2" fill="#fff" opacity=".2"/><rect x="3" y="5" width="10" height="2.5" rx="1" fill="#fff"/><rect x="3" y="9" width="7" height="2.5" rx="1" fill="#fff"/></svg>
-            Redact All Documents
-          </button>
-          <button class="btn-secondary hidden" id="downloadLogBtn" onclick="downloadLog()">Download Audit Log (CSV)</button>
-          <button class="btn-secondary" onclick="clearSession()">Clear Session</button>
-        </div>
+        <div style="position:sticky;bottom:0;background:var(--card);padding:10px 0 2px;margin-top:auto;border-top:1px solid var(--border);"><button class="btn-primary" id="redactBtn" onclick="redactAll()">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="2" fill="#fff" opacity=".2"/><rect x="3" y="5" width="10" height="2.5" rx="1" fill="#fff"/><rect x="3" y="9" width="7" height="2.5" rx="1" fill="#fff"/></svg>
+          Redact All Documents <span id="termCountBadge" style="background:rgba(255,255,255,0.25);border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;display:none;"></span>
+        </button>
+        <button class="btn-secondary hidden" id="downloadLogBtn" onclick="downloadLog()">Download Audit Log (CSV)</button>
+        <button class="btn-secondary" onclick="clearSession()">Clear Session</button></div>
       </div>
 
       <!-- MAIN -->
@@ -1217,7 +1216,16 @@ function renderLegalRef(){
 // ════════════════════════════════════════════════════════════
 function renderChips(){
   const area=document.getElementById('chipsArea');
-  if(!TERMS.length){ area.innerHTML='<span style="font-size:11px;color:var(--muted);">No terms added.</span>'; return; }
+  const badge=document.getElementById('termCountBadge');
+  const btn=document.getElementById('redactBtn');
+  if(!TERMS.length){
+    area.innerHTML='<span style="font-size:11px;color:var(--muted);">No terms added.</span>';
+    if(badge){ badge.style.display='none'; }
+    if(btn){ btn.style.opacity='0.6'; }
+    return;
+  }
+  if(badge){ badge.textContent=TERMS.length+' term'+(TERMS.length===1?'':'s'); badge.style.display='inline'; }
+  if(btn){ btn.style.opacity='1'; }
   area.innerHTML='';
   TERMS.forEach(function(t,i){
     const chip=document.createElement('span');
@@ -1365,7 +1373,18 @@ function stampWatermark(ctx, w, h){
 // REDACT ALL
 // ════════════════════════════════════════════════════════════
 async function redactAll(){
-  if(!TERMS.length){ alert('Add at least one term to redact first.'); return; }
+  if(!TERMS.length){
+    // Flash the terms panel to draw attention
+    const termsPanel = document.getElementById('chipsArea').closest('.panel');
+    termsPanel.style.border = '2px solid var(--danger)';
+    termsPanel.style.boxShadow = '0 0 0 3px rgba(192,57,43,0.2)';
+    document.getElementById('termInput').focus();
+    setTimeout(function(){ termsPanel.style.border=''; termsPanel.style.boxShadow=''; }, 2500);
+    // Show inline warning below the chips area
+    const warn = document.getElementById('noTermsWarn');
+    if(warn){ warn.style.display='block'; setTimeout(function(){ warn.style.display='none'; }, 3000); }
+    return;
+  }
   const pending=QUEUE.filter(function(q){ return q.status==='pending'; });
   if(!pending.length){ alert('No pending documents in the queue.'); return; }
   document.getElementById('redactBtn').disabled=true;
